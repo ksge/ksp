@@ -11,6 +11,6 @@ This game is realized with this goals:
 if you are a video maker or photographer and you want to realize a strip poker game now you need just to use your skils and creativity to produce the videoclips, wich should be the best part of the job for you, just produce clip files and order/name them correctly consulting the KISS STRIP GAME ENGINE GITHUB PAGE. You havn't to learn to code.
 search the web for full working demostrations of the game; starting from it you can personalize it putting your own videoclips
 
-PS: check also kiss strip blackjack project a really ultra-simple and minimalistic implementation 
+PS: check also kiss strip blackjack project a really ultra-simple and minimalistic implementation of KSGE
 
 good luck & good vision ;)
