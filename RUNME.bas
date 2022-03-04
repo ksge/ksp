@@ -17,13 +17,14 @@ chdir "core"
 	print "FOR EXAMPLE ON DEBIAN YOU CAN INSTALL THEM WITH:"
 	print "sudo apt install xterm vlc wget"
 	print
-	print "this game is tested only on Debian 10"
+	print "this game is tested only on Debian 10 and Debian 11, should work also on ubuntu and other distros"
+	print "note: to date if you are using wayland you may lose ability to resize and play full screen"
+	print "to restore those features just use xorg"
 	print
 	print "press ENTER to continue"
 	sleep
 #ENDIF 
 
-'shell "./ksec"
 
 #IFDEF __FB_WIN32__
 	shell "start /max ksge.exe 0"
@@ -32,4 +33,3 @@ chdir "core"
 #ENDIF
 
 end
-

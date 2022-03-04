@@ -9,6 +9,7 @@
 #6 python3 translation 
 #7 fixes for not responding when repeating click on replace during scenes
 #10 fixed "not responding" in some phases of the game
+#11 now los clip is played also when going from act to ris
 
 
 import operator
@@ -22,9 +23,9 @@ import time
 print (platform.system()) #5
 #7 time.sleep(0.5)
 
-#####################################################Global constants here
-modelname = "ModelName" # model/dir name #5
-wcou = 3
+#####################################################Global constants here######START
+modelname = "X" # model/dir name #5 must be equal to C1 on ksge
+wcou = 3 # number of winning row... must be equal to C5bis on ksge
 
 if platform.system() == "Windows": #5
 	wdir = ".ksge"
@@ -32,7 +33,7 @@ if platform.system() == "Windows": #5
 else:
 	wdir = "/dev/shm/.ksge"
 	wfile = "/dev/shm/.ksge/action"+modelname #5
-######################################################	
+######################################################Global constants here######END	
 
 #os.makedirs(wdir, exist_ok=True) #5
 
@@ -243,18 +244,18 @@ class Poker:
 		if winner == score1:
 			self.scores[0] += 1
 			if self.scores[0] == (wcou - 1):
-				##10 write los to ksge and wait
-				#f = open(wfile, "w")
-				#f.write("los")
-				#f.close()
-				#print ("Oh no,lLooks like I lose")
-				#xwai = "los"
-				#while xwai == "los":
-				#	print ("los-waiting")
-				#	time.sleep(1)
-				#	f = open(wfile, "r")
-				#	xwai = f.read()
-				#	f.close() 
+				##11 write los to ksge and wait
+				f = open(wfile, "w")
+				f.write("los")
+				f.close()
+				print ("Oh no, now I risk to remove something..")
+				xwai = "los"
+				while xwai == "los":
+					print ("oh no! I lost again")
+					time.sleep(1)
+					f = open(wfile, "r")
+					xwai = f.read()
+					f.close() #11 end 
 				##5 write risk to ksge
 				f = open(wfile, "w")
 				f.write("ris")

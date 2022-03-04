@@ -32,10 +32,10 @@ from pygame import mixer #9
 #3WIDTH = 640
 
 
-###############################################Global constants here
+###############################################Global constants here#######START
 gname = "Kiss Strip Poker" # game name 5
-modelname = "ModelName" # model/dir name #5
-wcou = 3
+modelname = "X" # model/dir name #5 must be equal to C1 on ksge
+wcou = 3 # number of winning row... must be equal to C5bis on ksge
 if platform.system() == "Windows": #5
 	wdir = ".ksge"
 	wfile = ".ksge\\action"+modelname  #5
@@ -53,7 +53,7 @@ SALMON = (250,128,114)
 
 gameIcon = pygame.image.load('icon.png')
 pygame.display.set_icon(gameIcon)
-#################################################
+#################################################Global constants here#######END
 
 #9 ************
 # Starting the mixer 

@@ -1,4 +1,6 @@
-rom tkinter import *
+# on linux sudo apt-get install python3-tk is needed
+
+from tkinter import *
 #from PIL import Image
 explanation = """I knew it... I lost..."""
 root = Tk()

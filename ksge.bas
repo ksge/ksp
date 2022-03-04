@@ -2,7 +2,7 @@
 ' A STRIP GAME ENGINE BUILD WITH FREEBASIC AND BASED ON LIBVLC AND CCRYPT 
 ' THIS VERSION CAN PLAY ONLY ENCRYPTED VIDEOCLIPS AND CHECKS FOR THE RIGHT ACTIVATION KEY
 ' COMPILE WITH FREEBASIC COMPILER (FBC) TESTET WITH VERSION 1.0.7 ON LINUX (DEBIAN 10 and UBUNTU 18.04) AND WINDOWS 10
-' ON DEBIAN/UBUNTU gcc , libvlc-dev , libncurses5 , libncurses5-dev are needed
+' ON UBUNTU gcc , libvlc-dev , libncurses5 , libncurses5-dev are needed
 ' sudo apt install -y gcc libncurses-dev libgpm-dev libx11-dev libxext-dev libxpm-dev libxrandr-dev libxrender-dev libgl1-mesa-dev libffi-dev libtinfo5 libvlc-dev 
 ' VIDEOCLIPS SHOULD BE ENCRYPTED WITH CCRYPT HERE IS AN EXAMPLE: ./ccrypt -e -K Str1pgame$areWonferful! YOURFOLDER/*.mkv
 ' ON LINUX VLC MEDIA PLAYER IS NEEDED TO LAUNCH THE GAME; INSTALL IT WITH: sudo apt install vlc
@@ -51,32 +51,28 @@ dim shared kspchaw as string
 dim shared scode as string
 
 
-'********************************************************
-'static parameters previously passed via command line
-const C1 as string = "ModelName" 'model name wich should be equal to folder name
-K1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 'key used for encrypt media content and activation file
-Kh = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" ' key used for temporary activation file (helpme)
-shash = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz  -" 'single hash for all clip *.cpt files
-shashw = "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww  -" 'single hash for all clip *.cpt files for windows platform
-kspcha = "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk  kspc"
-kspchaw= "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  kspc.exe"
-usdprice = 10 'target price in USD (intended more or less because of volatility and randomization), please insert integer number example: 5
+'***************signature+settings*START***********************************
+const C1 as string = "X" 'model name wich should be equal to folder name
+K1 = "kissstrippokerkissstrippokerkissstrippokerkissst" 'key used to encrypt media content and activation file
+Kh = "kissstripgameenginekissstripgameenginekissstripg" ' key used to temporary activation file (helpme manual procedure)
+shash = "9f53b95a011a720b22b82ceb48d71573  -" 'single hash for all clip *.cpt files
+shashw = "585D72D68D984D8A9072EB9532BC3709  -" 'single hash for all clip *.cpt files for windows platform
+kspcha = "790ed1ae2afbdb6e4e6fed25646859d6  kspc" ' hash for kspc
+kspchaw= "5314ACA2AA05F72A49BA69EC4D8B03C7  kspc.exe" ' hash for kspc.exe for windows
+usdprice = 50 'target price in USD (intended more or less because of volatility and randomization), please insert integer number example: 50
 randomizeprice = 0.00009999 'randomize price in satoshi
-raddress(1) = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" 'address to check transaction for (where monetize)
-totaladdr = 1
-rurl = "KISS STRIP GAME ENGINE"
-rown = "search for kiss strip poker homepage on the web"
+raddress(1) = "bc1qzemkkmvmpqfxua6segdd9d75jk4t3gvws3cld8" 'address to check transaction for (where monetize)
+totaladdr = 1 ' number of btc addresses inserted above (change only if you want to use more then one btc address)
+rurl = "KISS STRIP GAME ENGINE" 'please do not touch this line
+rown = "my-mail@gmail.com , www.mysite.com , etc" 'info about game author (mail, website, social, etc)
 const C3 as string = "mkv" 'clip file format
-'print "K1:" 'debug
-'print K1 'debug
-'sleep 'debug
 const C2 as string = "0" 'debug 0=no 1=yes
 const C4 as string = "KISS STRIP POKER" 'game name
-dim C5 as string = Command(1)  'number of winning rows to strip opponent if no specified in command line
-const C5bis as string = "2" 'number of standard rows (in case Commnand(1) = 0
-const C6 as integer = 3 'number of stages allowed for demo
-scode = "https://github.com/ksge"
-sub artwork
+dim C5 as string = Command(1)  'number of winning rows passed by command line (to be tested may not work)
+const C5bis as string = "3" 'number of winning rows required by removing opponent pice of cloth
+const C6 as integer = 4 'number of stages allowed for demo. if you don't want to monetize just type a value = to total number of stages or above
+scode = "https://github.com/ksge" 'ksge github page, you can add yours if needed
+sub artwork 'this ascii artwork will appear in terminal window
 	cls '6.3
 	print "                   .:+!++:::.  .:u+::.     " + C4
 	print "                 !!!X:!X<!!!<!#%?!!~XX!!!!:   with"
@@ -98,7 +94,8 @@ sub artwork
 		print "activated by " + emlf + " - thank YOU!"
 	end if
 end sub
-'********************************************************
+'***************signature+settings*END***********************************
+
 
 dim shared endflg as string
 endflg = "no"
@@ -270,7 +267,7 @@ sub chkhw
 			end if
 			print
 			print
-			sleep 500,1
+			sleep 200,1 '******** sleep 500,1
 			looflg = 1 '6.2
 			'goto rungame: '6.2
 		end if
@@ -468,7 +465,7 @@ dim kc1 as string
 		print
 		print "Game activated by: " + emlf
 		print
-		sleep 2000,1
+		sleep 1000,1 '****** 2000,1
 	end if
 	'sleep 100,1 *************
 	

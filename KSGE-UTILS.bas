@@ -21,33 +21,28 @@ dim shared kspchaw as string
 dim shared scode as string
 dim shared emlf as string
 
-
-'********************************************************
-'static parameters previously passed via command line
-const C1 as string = "ModelName" 'model name wich should be equal to folder name
-K1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 'key used for encrypt media content and activation file
-Kh = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" ' key used for temporary activation file (helpme)
-shash = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz  -" 'single hash for all clip *.cpt files
-shashw = "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww  -" 'single hash for all clip *.cpt files for windows platform
-kspcha = "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk  kspc"
-kspchaw= "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  kspc.exe"
-usdprice = 10 'target price in USD (intended more or less because of volatility and randomization), please insert integer number example: 5
+'***************signature+settings*START***********************************
+const C1 as string = "X" 'model name wich should be equal to folder name
+K1 = "kissstrippokerkissstrippokerkissstrippokerkissst" 'key used to encrypt media content and activation file
+Kh = "kissstripgameenginekissstripgameenginekissstripg" ' key used to temporary activation file (helpme manual procedure)
+shash = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  -" 'single hash for all clip *.cpt files
+shashw = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy  -" 'single hash for all clip *.cpt files for windows platform
+kspcha = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz  kspc" ' hash for kspc
+kspchaw= "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk  kspc.exe" ' hash for kspc.exe for windows
+usdprice = 50 'target price in USD (intended more or less because of volatility and randomization), please insert integer number example: 50
 randomizeprice = 0.00009999 'randomize price in satoshi
-raddress(1) = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" 'address to check transaction for (where monetize)
-totaladdr = 1
-rurl = "KISS STRIP GAME ENGINE"
-rown = "search for kiss strip poker homepage on the web"
+raddress(1) = "bc1qzemkkmvmpqfxua6segdd9d75jk4t3gvws3cld8" 'address to check transaction for (where monetize)
+totaladdr = 1 ' number of btc addresses inserted above (change only if you want to use more then one btc address)
+rurl = "KISS STRIP GAME ENGINE" 'please do not touch this line
+rown = "my-mail@gmail.com , www.mysite.com , etc" 'info about game author (mail, website, social, etc)
 const C3 as string = "mkv" 'clip file format
-'print "K1:" 'debug
-'print K1 'debug
-'sleep 'debug
 const C2 as string = "0" 'debug 0=no 1=yes
 const C4 as string = "KISS STRIP POKER" 'game name
-dim C5 as string = Command(1)  'number of winning rows to strip opponent if no specified in command line
-const C5bis as string = "2" 'number of standard rows (in case Commnand(1) = 0
-const C6 as integer = 3 'number of stages allowed for demo
-scode = "https://github.com/ksge"
-sub artwork
+dim C5 as string = Command(1)  'number of winning rows passed by command line (to be tested may not work)
+const C5bis as string = "3" 'number of winning rows required by removing opponent pice of cloth
+const C6 as integer = 4 'number of stages allowed for demo. if you don't want to monetize just type a value = to total number of stages or above
+scode = "https://github.com/ksge" 'ksge github page, you can add yours if needed
+sub artwork 'this ascii artwork will appear in terminal window
 	cls '6.3
 	print "                   .:+!++:::.  .:u+::.     " + C4
 	print "                 !!!X:!X<!!!<!#%?!!~XX!!!!:   with"
@@ -69,7 +64,7 @@ sub artwork
 		print "activated by " + emlf + " - thank YOU!"
 	end if
 end sub
-'********************************************************
+'***************signature+settings*END***********************************
 
 dim choice as integer
 'dim extens as string
@@ -143,6 +138,7 @@ color 14,2
 cls
 
 print "KSGE ACTIVATOR/ENCRYPTER"
+print C4 + " with " + C1
 print
 print "LAUNCH THIS PROGRAM INSIDE THE GAME FOLDER!"
 print
