@@ -1,14 +1,12 @@
 ' KSGE K.I.S.S. STRIP GAME ENGINE
-' A STRIP GAME ENGINE BUILD WITH FREEBASIC AND BASED ON LIBVLC AND CCRYPT 
-' THIS VERSION CAN PLAY ONLY ENCRYPTED VIDEOCLIPS AND CHECKS FOR THE RIGHT ACTIVATION KEY
-' COMPILE WITH FREEBASIC COMPILER (FBC) TESTET WITH VERSION 1.0.7 ON LINUX (DEBIAN 10 and UBUNTU 18.04) AND WINDOWS 10
-' ON UBUNTU gcc , libvlc-dev , libncurses5 , libncurses5-dev are needed
+' A STRIP GAME ENGINE BUILD WITH FREEBASIC AND BASED ON LIBVLC, CCRYPT, HASHDEEP AND OTHER OPENSOURCE PROJECTS 
+' CAN PLAY UNCRYPTED OR ENCRYPTED VIDEOCLIPS, IN CASE OF ENCRYPTED ALSO CHECKS FOR THE RIGHT ACTIVATION KEY AND MD5SUM OF ENCRYPTED CLIPS AND BINARIES
+' COMPILE WITH FREEBASIC COMPILER (FBC) TESTET WITH VERSION 1.10.1 ON LINUX (DEBIAN 12 AND ABOVE), WINDOWS 10 AND ABOVE 
+' TO COMPILE ON DEBIAN/UBUNTU: gcc , libvlc-dev , libncurses5 , libncurses5-dev are needed
 ' sudo apt install -y gcc libncurses-dev libgpm-dev libx11-dev libxext-dev libxpm-dev libxrandr-dev libxrender-dev libgl1-mesa-dev libffi-dev libtinfo5 libvlc-dev 
-' VIDEOCLIPS SHOULD BE ENCRYPTED WITH CCRYPT HERE IS AN EXAMPLE: ./ccrypt -e -K Str1pgame$areWonferful! YOURFOLDER/*.mkv
-' ON LINUX VLC MEDIA PLAYER IS NEEDED TO LAUNCH THE GAME; INSTALL IT WITH: sudo apt install vlc
+' ON LINUX VLC , XTERM and HASHDEEP ARE NEEDED TO PLAY THE GAME; ON DEBIAN/UBUNTU INSTALL WITH: sudo apt install vlc xterm hashdeep
 ' the right ccrypt version must be placed in game folder with folder name ccrypt (for windows folder must be named ccrypt-win)
-' on windows also wget and md5 must be placed in the game folder with folder name wget-win and md5
-' ON WINDOWS libvlc.dll libvlccore.dll and plugin folder must be placed in the game folder (al components can be found in vlc package, on windows vlc version 2.2.8 is at today reccomended)
+' ON WINDOWS libvlc.dll libvlccore.dll and plugin folder must be placed in the game folder (all components can be found in vlc package, on windows vlc version 2.2.8 is reccomended)
 ' 
 ' CHANGELOG:
 ' VERSION 1.0 20181129 First working version
@@ -17,7 +15,7 @@
 ' VERSION 3.1 20190107 fixed video path/extension bug and slimmed the vlc command line (no single instance and other fixes)
 ' VERSION 4.0 20190120 vlc replaced by mpv
 ' VERSION 5.0 20190217 mpv replaced again by libvlc
-' VERSION 5.1          checksum of ccrypt bin, on linux every file write during game into memory, static commands inside ksge (except rows), hw mac address check with demo mode, 
+' VERSION 5.1          checksum of ccrypt bin, on linux every file write during game into memory
 ' VERSION 5.2 20190823 various bugfixes
 ' VERSION 5.3 20190827 various bugfixes + testend on Ubuntu 18.04.3
 ' VERSION 5.4 20190828 various bugfixes + tested on Windows 10 1903
@@ -26,57 +24,59 @@
 ' VERSION 5.7 20200220 changed colors/messages in console window
 ' VERSION 5.8 20200918 fixed key read bug
 ' VERSION 5.9 20201001 fixed md5 *.cpt checksum bug on linux
-' VERSION 6.0 20201017 support for PokerView.py added popup when opponent lost
+' VERSION 6.0 20201017 support for PokerView.py added popup when opponent lost game
 ' VERSION 6.1 20210310 support for kspc-url v2, will launch it when game start if a valid activation file is present
-' VERSION 6.2 20210311 fixed multiple nic mac address bug + artwork on terminal window
+' VERSION 6.2 20210311 artwork on terminal window
 ' VERSION 6.3 20210601 small bugfixes on game startup on win
-
-dim totaladdr as integer
+' VERSION 6.4FREE 20240106 multi-opponent feature - improve clip not found handle
+' VERSION 6.5FREE+NONFREE 20240219 added flag to switch between Unencrypted or Encrypted content
+' VERSION 20240331 code optimizations, md5deep replaces md5sum for better multiplatform compatibility
+' 20240308 code optimizations
 dim shared K1 as string*64
-dim shared HW1 as string*64
-dim shared lin as string*64
-dim shared Kh as string*64
-dim raddress(1 to 20) as string
-dim usdprice as integer
-dim randomizeprice as double
 dim shared action as string
 dim shared shash as string
-dim shared shashw as string
+dim shared shashc as string
 dim shared emlf as string
 dim shared EML as string
 dim shared rown as string
 dim shared rurl as string
 dim shared kspcha as string
 dim shared kspchaw as string
+dim shared kspcbmp as string
+'dim shared kspcbmpw as string
+dim shared kspeha as string
+dim shared kspehaw as string
+dim shared kspebmp as string
 dim shared scode as string
 
-
 '***************signature+settings*START***********************************
-const C1 as string = "X" 'model name wich should be equal to folder name
-K1 = "kissstrippokerkissstrippokerkissstrippokerkissst" 'key used to encrypt media content and activation file
-Kh = "kissstripgameenginekissstripgameenginekissstripg" ' key used to temporary activation file (helpme manual procedure)
-shash = "9f53b95a011a720b22b82ceb48d71573  -" 'single hash for all clip *.cpt files
-shashw = "585D72D68D984D8A9072EB9532BC3709  -" 'single hash for all clip *.cpt files for windows platform
-kspcha = "790ed1ae2afbdb6e4e6fed25646859d6  kspc" ' hash for kspc
-kspchaw= "5314ACA2AA05F72A49BA69EC4D8B03C7  kspc.exe" ' hash for kspc.exe for windows
-usdprice = 50 'target price in USD (intended more or less because of volatility and randomization), please insert integer number example: 50
-randomizeprice = 0.00009999 'randomize price in satoshi
-raddress(1) = "bc1qzemkkmvmpqfxua6segdd9d75jk4t3gvws3cld8" 'address to check transaction for (where monetize)
-totaladdr = 1 ' number of btc addresses inserted above (change only if you want to use more then one btc address)
-rurl = "KISS STRIP GAME ENGINE" 'please do not touch this line
-rown = "my-mail@gmail.com , www.mysite.com , etc" 'info about game author (mail, website, social, etc)
+const KSGEVER as string = "20240408" 'ksge version
+const C1 as string = "KSP" 'costant name after 2024 re-engineered
+const C4 as string = "KISS STRIP POKER" 'game name
+K1 = "stripgamesarecool" 'key used to encrypt media content and activation file
+const ccryptha as string = "1d2c1d17b7b0951608bac0baa03b3081  " 'ccrypt hash
+const ccrypthaw as string = "1870e29d6261841058b8f73f4e3fe0d2  " 'ccrypt.exe hash
+const livlchaw as string = "3c48d31c6fe86762b9ec8ce129444a12  " 'libvlc.dll hash
+kspcha = "8a6c6bface2dd2b485e72bdc0b5c69f3  " ' hash for kspc (linux)
+kspchaw= "9b2cbc9e7ef6ee7a389b4bd7e01b1273  " ' hash for kspc.exe (windows)
+kspcbmp= "6f8ed7428ba09d521a70c5b883afaf78  " ' hash for kspc.bmp
+kspeha = "05a4d039b8d62ee94a619fcb86beeb40  " ' hash for poker-end (linux)
+kspehaw= "400ed274c8e024f6d713e34080c6ab90  " ' hash for poker-end.exe (windows)
+kspebmp= "9090c3f41e6d885a6cc2a57eaf326706  " ' hash for poker-end.bmp
+rown = "ksge@tutanota.com , https://kissstrippoker.wordpress.com" 'info about game author (mail, website, social, etc)
+scode = "https://github.com/ksge" 'ksge github page, you can add yours if needed
 const C3 as string = "mkv" 'clip file format
 const C2 as string = "0" 'debug 0=no 1=yes
-const C4 as string = "KISS STRIP POKER" 'game name
-dim C5 as string = Command(1)  'number of winning rows passed by command line (to be tested may not work)
-const C5bis as string = "3" 'number of winning rows required by removing opponent pice of cloth
-const C6 as integer = 4 'number of stages allowed for demo. if you don't want to monetize just type a value = to total number of stages or above
-scode = "https://github.com/ksge" 'ksge github page, you can add yours if needed
+dim KSGEENC as string = Command(1) 'type of media content: u=uncrypted e=encrytped
+dim KSGEKNM as string = Command(2) 'model name = folder name - used for build activation file name only in encrypted mode
+const C5bis as string = "3" 'number of winning rows required by removing opponent piece of cloth
+const C6 as integer = 2 'number of stages allowed for demo
+rurl = "KISS STRIP GAME ENGINE" 'please do not touch this line
 sub artwork 'this ascii artwork will appear in terminal window
 	cls '6.3
 	print "                   .:+!++:::.  .:u+::.     " + C4
-	print "                 !!!X:!X<!!!<!#%?!!~XX!!!!:   with"
-	print "             :<!!X!!!!:!!>?~!~:<!~!!!?!!!X!!!:  " + C1
+	print "                 !!!X:!X<!!!<!#%?!!~XX!!!!:   "
+	print "             :<!!X!!!!:!!>?~!~:<!~!!!?!!!X!!!:  "
 	print "           <!!!%!!!!!~!!!!!!<!!!!!!!!!!!!!!!X!!:"
 	print "         <!!!!!!!!!!:<<<~~~!~~~~!~~~~!~!<!:!!!!!!:"
 	print "       :!!!!!!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~<!~!!!!!."
@@ -88,52 +88,98 @@ sub artwork 'this ascii artwork will appear in terminal window
 	print "         ~!!!!!!!!!?!!R?MMM!#$T*M!RMSMXM7!!!!!!!\~~"
 	print "           ~~~!!!!!~!!!!!!!!!<!!!!:!!!!!!!!<!~!~~  "
 	print "              ~~~~!!!!~!~!~~~!>!:~!!!!!!!!!~~~"
-	print "                 `~~~~~~!<!~~!<!!~~!::~~~~~"
-	print "                         ~~~~~~~~~~~~!    " + rurl
-	if emlf <> "BLANK" and emlf <> "" then
+	print "                 `~~~~~~!<!~~!<!!~~!::~~~~~" + rurl
+	print "                         ~~~~~~~~~~~~!    ver" + KSGEVER
+	if emlf <> "DEMO" and emlf <> "demo" then
 		print "activated by " + emlf + " - thank YOU!"
+	else
+		print "Demo mode"
 	end if
 end sub
 '***************signature+settings*END***********************************
 
+	dim shared tmpplayfolder as string
+	dim shared ln as string
+	dim shared cmdshl as string
+	dim shared cmdshl2 as string
+	dim shared cmdshl3 as string
+	dim shared cmdshl4 as string
+	dim shared cmdshl5 as string
+	dim shared cmdshl6 as string
+	dim shared cmdshlv as string
+	
+	#IFDEF __FB_WIN32__
+		const decryptexename = "..\..\core\ccrypt-win\ccrypt.exe" '6.4
+		const tmpplayrootfolder as string = "act\" '6.4
+		tmpplayfolder = ".ksge\" '6.4
+		shell "rd /s /q .ksge" '6.4
+		shell "md .ksge" '6.4
+		shell "attrib +H .ksge" '6.4
+	#ELSE
+		const decryptexename = "../../core/ccrypt/ccrypt" '6.4
+		const tmpplayrootfolder as string = "act/" '6.4
+		shell "rm -f -r -d /dev/shm/.ksge" '6.4
+		mkdir "/dev/shm/.ksge" '6.4
+		tmpplayfolder = "/dev/shm/.ksge/" '6.4
+	#ENDIF
+
+	
+	#IFDEF __FB_WIN32__
+		cmdshl = ("..\..\core\md5deep\md5deep64.exe -q " + decryptexename) '6.4
+		cmdshl2 = ("dir *.cpt /b /os | ..\..\core\md5deep\md5deep64.exe -q") '6.4
+		cmdshl3 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\kspc.exe") '6.4
+		cmdshl4 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\kspc.bmp")
+		cmdshl5 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\poker-end.exe")
+		cmdshl6 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\poker-end.bmp")
+		cmdshlv = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\libvlc.dll")
+	#ELSE
+		cmdshl = ("md5deep -q " + decryptexename)
+		cmdshl2 = ("ls -1hSr *.cpt | md5deep -q")
+		cmdshl3 = ("md5deep -q ../../core/kspc") '6.4
+		cmdshl4 = ("md5deep -q ../../core/kspc.bmp")
+		cmdshl5 = ("md5deep -q ../../core/poker-end")
+		cmdshl6 = ("md5deep -q ../../core/poker-end.bmp")
+	#ENDIF
 
 dim shared endflg as string
 endflg = "no"
 
 ' let's see if we are on linux or windows
 dim shared CC1 as string
+dim shared CCHSH as string
 #IFDEF __FB_WIN32__
    CONST OS = "windows"
-   CC1 = "..\" + C1
+   'CC1 = "key\" + C1 
+   CC1 = "key\" + KSGEKNM + "-key.cpt"
+   CCHSH = "key\" + KSGEKNM + "-kwin.cpt"
 #ELSE
    CONST OS = "linux"
-   CC1 = "../" + C1
+   'CC1 = "key/" + C1 
+   CC1 = "key/" + KSGEKNM + "-key.cpt"
+   CCHSH = "key/" + KSGEKNM + "-klin.cpt"
 #ENDIF
 
 print C4 + " FOR: " ; OS
-sleep 1000
-
-'dim shared tmpplayrootfolder as string
-'dim shared decryptexename as string
-dim shared tmpplayfolder as string
-
+if KSGEENC = "u" then
+	print "Uncrypted content mode"
+elseif KSGEENC = "e" then
+	print "Encrypted content mode"
+else
+	print "error check parameters"
+	sleep 5000
+	end
+end if
+'print "mode: " + KSGEENC
 #IFDEF __FB_WIN32__
-	const decryptexename = "ccrypt-win\ccrypt.exe"
-	const tmpplayrootfolder as string = ".ksge\"
-	tmpplayfolder = ".ksge\"
-	shell "rd /s /q .ksge"
-	shell "md .ksge"
-	shell "attrib +H .ksge"
+	print
+	print "PLEASE WAIT.... LOADING Kiss Strip Game Engine "
+	'sleep 2000
+	print
 #ELSE
-	const decryptexename = "./ccrypt/ccrypt"
-	const tmpplayrootfolder as string = "/dev/shm/.ksge/"
-	shell "rm -f -r -d /dev/shm/.ksge"
-	mkdir "/dev/shm/.ksge"
-	tmpplayfolder = "/dev/shm/.ksge/"
+	print
+	print "PLEASE WAIT.... LOADING Kiss Strip Game Engine "
 #ENDIF
-
-'set right working folder (where are clips and action file); strip game must use the same action file
-'mkdir tmpplayrootfolder
+sleep 2000
 
 sub actiondone (acted as string)
    open tmpplayrootfolder + "action" + C1 FOR OUTPUT AS #8 LEN = 3
@@ -141,32 +187,16 @@ sub actiondone (acted as string)
    CLOSE #8
 End sub
 
-
 sub chkbin 'chk if the bin(s) are genuine
-	dim cmdshl as string
-	dim cmdshl2 as string
-	dim cmdshl3 as string
-	
-	#IFDEF __FB_WIN32__
-		cmdshl = ("md5\md5.exe " + decryptexename)
-		cmdshl2 = ("dir *.cpt /b /os | md5\md5.exe")
-		cmdshl3 = ("md5\md5.exe kspc.exe")
-	#ELSE
-		cmdshl = ("md5sum " + decryptexename)
-		cmdshl2 = ("du --apparent-size -k *.cpt | md5sum")
-		cmdshl3 = ("md5sum kspc")
-	#ENDIF
-	
+	print ":" 'dbg
 	Open Pipe cmdshl For Input As #1
-
-	Dim As String ln
 	Do Until EOF(1)
 		Line Input #1, ln
-		if ln <> "1d2c1d17b7b0951608bac0baa03b3081  ./ccrypt/ccrypt" and ln <> "1870E29D6261841058B8F73F4E3FE0D2  ccrypt-win\ccrypt.exe" then
+		if ln <> ccryptha and ln <> ccrypthaw then
 			action = "qui"
 			print ln
 			print "ERROR: WRONG CCRYPT CHECKSUM!"
-			sleep 3000,1
+			sleep 10000,1
 			Close #1
 			end
 		end if
@@ -174,45 +204,77 @@ sub chkbin 'chk if the bin(s) are genuine
 	Close #1
 	
 	Open Pipe cmdshl2 For Input As #1
-	'Do Until EOF(1)
 		Line Input #1, ln
-		Close #1
-		if ln <> shash and ln <> shashw then
+	Close #1
+	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CC1) for Input as #4
+		line input #4, shash
+	close #4
+	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CCHSH) for Input as #9
+		line input #9, shashc
+	close #9
+		if ln <> shash and ln <> shashc then
 			action = "qui"
 			print ln
-			print "ERROR: WRONG CLIPS CHECKSUM!"
-			sleep 3000,1
-			'Close #1
+			print "ERROR: WRONG CLIPS CHECKSUM! YOU NEED A VALID KEY FILE TO PLAY"
+			sleep 10000,1
 			end
 		end if
-	'Loop
+		'if shash <> shashc then
+		'	action = "qui"
+		'	print "ERROR: CLIPS KEYS DOESN'T MATCH!"
+		'	sleep 10000,1
+		'	end
+		'end if
 	
 	Open Pipe cmdshl3 For Input As #1
-	'Do Until EOF(1)
 		Line Input #1, ln
 		Close #1
 		if ln <> kspchaw and ln <> kspcha then 
 			action = "qui" '********* DEBUG ***************
 			print ln
 			print "ERROR: WRONG KSPC CHECKSUM!"
-			sleep 3000,1
-			'Close #1
-			'end 'debug ************************************************************** 
+			sleep 6000,1
 		end if
-	'Loop
 	
+	Open Pipe cmdshl4 For Input As #1
+		Line Input #1, ln
+		Close #1
+		if ln <> kspcbmp then 
+			action = "qui" '********* DEBUG ***************
+			print ln
+			print "ERROR: WRONG KSPC.BMP CHECKSUM!"
+			sleep 6000,1
+		end if
+	
+	Open Pipe cmdshl5 For Input As #1
+		Line Input #1, ln
+		Close #1
+		if ln <> kspehaw and ln <> kspeha then 
+			action = "qui" '********* DEBUG ***************
+			print ln
+			print "ERROR: WRONG poker-end CHECKSUM!"
+			sleep 6000,1 
+		end if
+		
+		Open Pipe cmdshl6 For Input As #1
+		Line Input #1, ln
+		Close #1
+		if ln <> kspebmp then 
+			action = "qui" '********* DEBUG ***************
+			print ln
+			print "ERROR: WRONG poker-end.bmp CHECKSUM!"
+			sleep 6000,1 
+		end if
 	
 	#IFDEF __FB_WIN32__
-		cmdshl = ("md5\md5.exe libvlc.dll")
-		Open Pipe cmdshl For Input As #1
-		'Dim As String ln
+		Open Pipe cmdshlv For Input As #1
 		Do Until EOF(1)
 		Line Input #1, ln
-		if ln <> "3C48D31C6FE86762B9EC8CE129444A12  libvlc.dll" then
+		if ln <> livlchaw then
 			action = "qui"
 			print ln
 			print "ERROR: WRONG LIBVLC CHECKSUM!"
-			sleep 3000,1
+			sleep 6000,1
 			Close #1
 			end
 		end if
@@ -223,99 +285,70 @@ sub chkbin 'chk if the bin(s) are genuine
 	
 end sub
 
-sub chkhw
-	'check if hw is ok
-	dim cmd2 as string
+sub chkkey
+	print "." 'dbg
+	dim KSGEKEY as string
 	chkbin
-	'open pipe ("echo " + K1 + " | " + decryptexename + " -c -k - " + CC1 + "-key") for Input as #3
-	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CC1 + "-key") for Input as #3	
-		line input #3, EML
-		line input #3, HW1
+	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CC1) for Input as #5
+		line input #5, KSGEKEY
+		line input #5, EML
 		'print "HW1: " 'debug
 		'print HW1 'debug
 		'print "K1: " 'debug
 		'print K1 'debug
-	close #3
-	'Dim As String lin
+	close #5
 	
-	#IFDEF __FB_WIN32__
-		Open Pipe "getmac /fo csv /nh" For Input As #2
-	#ELSE
-		Open Pipe "ip addr | grep ether" For Input As #2
-	#ENDIF
-	dim looflg as integer
-	looflg = 0
-	Do Until EOF(2) '6.2
-		Line Input #2, lin
-		'Close #2 '6.2
-		'print "lin:" 'debug
-		'print lin 'debug
-		if lin = HW1 or HW1 = K1 then
-			'Close #2
-			'print
-			print
-			'print "Thank YOU for supporting this game!!"
-			'print "game activated by:"
-			'print EML
-			artwork
-			'------------------------------------------print EML
-			'-----------------------------------------shell "echo " + EML + " thank YOU for supporting this game!"
-			if lin = HW1 then 
-				print "please note that this game will work only on this PC"
-			else 
-				print "your game key has no limits"
-			end if
-			print
-			print
-			sleep 200,1 '******** sleep 500,1
-			looflg = 1 '6.2
-			'goto rungame: '6.2
-		end if
-	Loop '6.2
-	Close #2 '6.2
-	if looflg = 1 then '6.2
-		goto rungame:
-	endif
-	artwork
-	print "this game is a demo; "
-	'-------------------------------------------------print "if you like and want to finish undress the opponent, "
-	'------------------------------------------------print "please support it... thank you"
-	sleep 5000
-	action = "qui"
-	actiondone ("qui")
+	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CCHSH) for Input as #7
+		line input #7, shashc
+	close #7
 	
-	#IFDEF __FB_WIN32__
-			shell "start kspc.exe"
-	#ELSE
-			shell "xterm -fa 'Monospace' -fs 14 -e ./kspc"
-	#ENDIF
+	Open Pipe cmdshl2 For Input As #6
+		Line Input #6, ln
+	Close #6
 	
-	end
-	'libvlc_media_player_release(pPlayer)
-	'libvlc_release(pInstance)
-	'kill tmpmediaFileName
-	'kill tmpplayrootfolder + "action" + C1
-	'end
-	rungame:
+	if shashc <> KSGEKEY then
+		print "ERROR PLEASE CHECK KEY FILES!"
+		end
+		kill tmpplayrootfolder + "action" + C1
+		end
+	end if
+	
+	if KSGEKEY = ln and EML <> "demo" and EML <> "DEMO" then 'or KSGEKEY = shashw then
+		'print
+		print "game activated by:"
+		print EML
+		print "Thank YOU for supporting this game!!"
+		'artwork
+		print "game activated by:" + EML
+	else
+		artwork
+		print "this is a demo, "
+		print "if you want to continue, "
+		print "please support this game. thank you"
+		'print "ksgekey: " + KSGEKEY 'debug
+		'print "ln: " + ln 'debug
+		sleep 10000
+		action = "qui"
+		actiondone ("qui")
+		
+		#IFDEF __FB_WIN32__
+			shell "start ..\..\core\kspc.exe"
+		#ELSE
+			shell "xterm -fa 'Monospace' -fs 14 -e ../../core/./kspc"
+		#ENDIF
+		
+		end
+		kill tmpplayrootfolder + "action" + C1
+		end
+	end if
 end sub
-
-
-'run game
-'rungame:
-
-
-
-if C5 < "1" then C5 = C5bis
-'print "./ksbj " + C5 + " " + """" + C4 + """" + " " + """" + C1 + """" + " " + C2 + " &" 'debug
 
 actiondone ("car") '6.3
 sleep 1000,1 '6.3
 #IFDEF __FB_WIN32__
-	'shell "start ksbj.exe " + C5 + " " + """" + C4 + """" + " " + """" + C1 + """" + " " + C2
-	shell "start PokerView.exe"
+	shell "start ..\..\core\PokerView.exe"
 #ELSE
-	'shell "./ksbj " + C5 + " " + """" + C4 + """" + " " + """" + C1 + """" + " " + C2 + " &"
-	shell "./PokerView &"
+	shell "../../core/./PokerView &"
 #ENDIF
 
 color 15,1
@@ -326,8 +359,7 @@ print C4
 
 #include once "vlc/vlc.bi"
 
-'name of clips (wich must be then build by ksge adding only numbers)
-'const ncliptype as string = ".mkv" 'type of clips.. avi, mkv, mpg, mp4 ecc..
+'name of clips
 #IFDEF __FB_WIN32__
 	const nclipstage as string = "stage" 'part of clip name
 	const nclipenter as string = "enter" 'part of clip name
@@ -352,13 +384,8 @@ dim cmdline as string
 	
 'encryptd file type
 const ncliptypeencrypted as string = ".cpt"
-'opponents folder
-'const opponentsfolder as string = "opponents"
-'temp playing folder/file
-
 
 dim shared tmpplayfile as string
-
 dim shared clipcount as integer = 0
 dim shared currentstage as integer = 0
 dim shared cliptoplay as string
@@ -368,8 +395,6 @@ dim shared ncliptype as string
 
 'set correct clip file extension
 ncliptype = "." & C3
-
-
 
 if c2 = "1" then print C1
 'chdir opponentsfolder
@@ -391,10 +416,7 @@ Function clipcounter (cliptosearch as string) as string
 		filename = Dir( )
 	Loop
 
-if C2 = "1" then
-	print "clipsearched: " , cliptosearch 'debug
-	print "counter: " , clipcount 'debug
-endif
+print cliptosearch , " counter: " , clipcount '6.4
 
 Function = str (clipcount)
 'Sleep
@@ -411,11 +433,9 @@ sub stagescounter
 	loop
 	totalstages = totalstages - 1
 	if C2 = "1" then print flname 'debug
-	if C2 = "1" then print "TOTAL STAGES: " , totalstages 'debug
+	print "stages: " , totalstages
 	if C2 = "1" then print totalstages 'debug
-	'sleep 'debug
 end sub
-
 
 sub avoidduplicate
 	do while clipcount > 1 and cliptoplay = lastclipplayed 
@@ -429,37 +449,23 @@ sub avoidduplicate
 end sub
 
 sub chkpop '6.1
-dim kc1 as string 
-	dim cmd2 as string
-	'dim emlf as string
+	dim kc1 as string 
 	dim hwrf as string 
 	dim hwr as string
 	dim popf as string
 	dim kc1f as string
 	dim pop as string
-	'#IFDEF __FB_WIN32__
-	'open pipe ("echo " + Kh + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-pop-key.cpt") for Input as #3
-	'#ELSE
-	'open pipe ("echo " + Kh + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-pop-key.cpt") for Input as #3
-	'#ENDIF
-	'	line input #3, pop
-	'	line input #3, kc1
-		'print pop 'debug
-		'print kc1 'debug
-	'	print
-	'close #3
-	'sleep 100,1
+	dim tmpkkey as string
 	
 	#IFDEF __FB_WIN32__
-	open pipe ("echo " + K1 + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-key.cpt") for Input as #3
+		open pipe ("echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -c -k - " + CC1) for Input as #3 '6.4
 	#ELSE
-	open pipe ("echo " + K1 + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-key.cpt") for Input as #3
+		open pipe ("echo " + K1 + "| ../../core/ccrypt/./ccrypt -c -k - " + CC1) for Input as #3 '6.4
 	#ENDIF
+		line input #3, tmpkkey 
 		line input #3, emlf
-		line input #3, hwrf
-		line input #3, kc1f 
 	close #3
-	if emlf <> "" and emlf <> "BLANK" then
+	if emlf <> "" and emlf <> "DEMO" and emlf <> "demo" then
 		color 15,1
 		cls
 		print
@@ -467,81 +473,10 @@ dim kc1 as string
 		print
 		sleep 1000,1 '****** 2000,1
 	end if
-	'sleep 100,1 *************
-	
-	#IFDEF __FB_WIN32__
-	Open Pipe "getmac /fo csv /nh" For Input As #2
-	#ELSE
-	Open Pipe "ip addr | grep ether" For Input As #2
-	#ENDIF
-	dim popch1 as integer
-	dim popch2 as integer
-	popch1 = 0
-	popch2 = 0
-	Do Until EOF(2) '6.2
-	Line Input #2, hwr
-	'Close #2 '6.2
-	sleep 100,1
-	
-	if kc1f = c1 and hwr = hwrf then
-		'print "goto nocheck" 'debug
-		'sleep 'debug
-		'#IFDEF __FB_WIN32__
-		'shell "start kspc.exe"
-		'#ELSE
-		'shell "xterm -fa 'Monospace' -fs 14 -e ./kspc"
-		'#ENDIF
-		goto nocheck
-	endif
-	
-	if kc1f = c1 and hwr <> hwrf then
-			'#IFDEF __FB_WIN32__
-			'shell "start kspc.exe"
-			'#ELSE
-			'shell "xterm -fa 'Monospace' -fs 14 -e ./kspc"
-			'#ENDIF
-			popch1 = 1
-			'end 6.2
-	endif
-	
-	if kc1f = c1 and hwrf = "BLANK" then ' pending activation
-		popch1 = 1
-	end if
-	
-	'if kc1 = C1 and __DATE_ISO__ < pop then
-			'#IFDEF __FB_WIN32__
-			'shell "start kspc.exe"
-			'#ELSE
-			'shell "xterm -fa 'Monospace' -fs 14 -e ./kspc"
-			'#ENDIF
-	'		popch2 = 1
-			'end 6.2
-	'endif 
-	loop '6.2
-	Close #2 '6.2
-	if popch1 =1 then
-		#IFDEF __FB_WIN32__
-		shell "start kspc.exe"
-		#ELSE
-		shell "xterm -fa 'Monospace' -fs 14 -e ./kspc"
-		#ENDIF
-		Close #2 '6.2
-		end
-	endif
-	if popch2 = 1 then
-		#IFDEF __FB_WIN32__
-		shell "start kspc.exe"
-		#ELSE
-		shell "xterm -fa 'Monospace' -fs 14 -e ./kspc"
-		#ENDIF
-		Close #2 '6.2
-		end
-	endif
+
 	nocheck:
-	Close #2 '6.2
+
 end sub
-
-
 
 
 function play(fileName as string, pInstance as libvlc_instance_t ptr, pPlayer as libvlc_media_player_t ptr) as integer
@@ -564,8 +499,6 @@ function play(fileName as string, pInstance as libvlc_instance_t ptr, pPlayer as
    while libvlc_media_get_state(pMedia) <> libvlc_ended
       sleep 100, 1
    wend
-   'XXX libvlc_media_player_stop(pPlayer)
-   'sleep
    return 0
 end function
 
@@ -579,17 +512,11 @@ var pPlayer = libvlc_media_player_new(pInstance) 'libvlc_media_player_t ptr
 #ENDIF
 
 ' MAIN
-chkbin
-chkpop '6.1
+if KSGEENC = "e" then
+	chkbin
+	chkpop '6.1
+end if
 Randomize Timer
-' set random tmp file/folder
-'tmpplayfolder = tmpplayrootfolder + str(Int(rnd_range(1, 999999))) + "/" '(random folder... deprecated)
-
-'#IFDEF __FB_WIN32__
-'	tmpplayfolder = tmpplayrootfolder + "\" 
-'#ELSE
-'	tmpplayfolder = tmpplayrootfolder + "/"
-'#ENDIF
 
 tmpplayfile = str(Int(rnd_range(1, 999999)))
 var tmpMediaFileName = tmpplayfolder + tmpplayfile
@@ -597,17 +524,6 @@ var tmpMediaFileName = tmpplayfolder + tmpplayfile
 'first of all I reset the action file
 actiondone ("car")
 stagescounter
-
-' deprecated launch of game thread
-'#IFDEF __FB_WIN32__
-'   CONST OS = "windows"
-'   shell "start game.bat"
-'#ELSE
-'   CONST OS = "linux"
-'   shell "./game.sh &"
-'#ENDIF
-'print OS
-
 
 while action <> "qui"
 print C4
@@ -654,16 +570,16 @@ if currentstage > 0 then
 		endflg = "yes"
 		'*************6.0
 		#IFDEF __FB_WIN32__
-		shell "start poker-end.exe"
+		shell "start ..\..\core\poker-end.exe"
 		#ELSE
-		shell "./poker-end &"
+		shell "../../core/./poker-end &"
 		#ENDIF
 		'*************
 		elseif currentstage < totalstages then
 			actiondone ("car") 'after off... model should take cards...
 		end if
 		currentstage = currentstage + 1
-		if currentstage > C6 then chkhw 'checks if game is in demo mode
+		if currentstage > C6 and KSGEENC = "e" then chkkey '6.3FREE if currentstage > C6 then chkhw 'checks if game is in demo mode
 	case "end"
 		clipcounter (nclipend)
 		cliptoplay = nclipend + str(Int(rnd_range(1, clipcount+1))) + ncliptype 
@@ -685,21 +601,17 @@ if currentstage > 0 then
 		actiondone ("act") 'after car... model should act...
 	end select
 	
-	
-	
-	
 	if clipcount = 0 and currentstage <= totalstages then
-		if C2 = "1" then print "ERROR CLIP NOT FOUND!!!!"
-		if C2 = "1" then print cliptoplay
+		'6.4 if C2 = "1" then 
+		print "missing clip: " , cliptoplay '6.4
+		'6.4 if C2 = "1" then print cliptoplay
 		'sleep
+		clipcounter (nclipstage + str (currentstage) + "act") '6.4 improve clip not found
+		cliptoplay = nclipstage + str (currentstage) + "act" + str(Int(rnd_range(1, clipcount+1))) + ncliptype '6.4 improve clip not found
 	end if
 	
 	mediaFileName = cliptoplay
 	lastclipplayed =cliptoplay
-	
-	
-	
-	
 end if
 
 ' entering scene 
@@ -711,43 +623,39 @@ if currentstage = 0 then
 	action = "car"
 end if
 	
-   'if C2 = "1" then print mediaFileName 'debug
    print mediaFileName
-   ' check decrypter checksum
-   'chkbin
-   ' decrypt content
-   chkbin
-   'cmdline = "echo " + K1 + " | " + decryptexename + " -c -k - " + mediaFileName +  " > " + tmpmediaFileName
-   cmdline = "echo " + K1 + "| " + decryptexename + " -c -k - " + mediaFileName +  " > " + tmpmediaFileName
-   
-	if C2 = "1" then print cmdline 'debug
-		
-	Dim result As Integer
+   if KSGEENC = "e" then 
 	chkbin
-	result = Shell (cmdline) 
-	If result = -1 Then
-		Print "Error running "; mediaFileName
-	Else
-		if C2 = "1" then Print "Exit code:"; result 'debug
-	End If
-	'return 0
-   'if play(mediaFileName, pInstance, pPlayer) < 0 then exit while ' <------- HERE STARTS PLAY CLIP
-   'print "playing: " ; tmpMediaFileName 'debug
-   if play(tmpmediaFileName, pInstance, pPlayer) < 0 then print mediaFileName, "MAYBE NOT FOUND???" ' <------- HERE STARTS PLAY CLIP
-   kill tmpmediaFileName 'after played tmp uncrypted file is deleted
+	cmdline = "echo " + K1 + "| " + decryptexename + " -c -k - " + mediaFileName +  " > " + tmpmediaFileName
+   end if
+   	
+	Dim result As Integer
+	if KSGEENC = "e" then
+		'chkbin
+		result = Shell (cmdline) 
+		If result = -1 Then
+			Print "Error running "; mediaFileName
+			Else
+			if C2 = "1" then Print "Exit code:"; result 'debug
+		End If
+	end if
+   if KSGEENC = "e" then
+		if play(tmpmediaFileName, pInstance, pPlayer) < 0 then print mediaFileName, "MAYBE NOT FOUND???" ' <------- HERE STARTS PLAY CLIP 'nonfree
+		kill tmpmediaFileName 'after played tmp uncrypted file is deleted 'nonfree
+   else
+		if play(mediaFileName, pInstance, pPlayer) < 0 then print mediaFileName
+   end if
    open tmpplayrootfolder + "action" + C1 FOR INPUT AS #8 LEN = 3
    if action <> "qui" then input #8, action
    CLOSE #8
    'print 'debug
-   chkbin
+   '''if KSGEENC = "e" then chkbin
 wend
-
-
 
 libvlc_media_player_release(pPlayer)
 libvlc_release(pInstance)
 
-kill tmpmediaFileName
+if KSGEENC = "e" then kill tmpmediaFileName
 kill tmpplayrootfolder + "action" + C1
 
 print "bye bye"
