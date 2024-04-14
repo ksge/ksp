@@ -6,12 +6,13 @@
 #8 if ksge outputs "end" then quit game
 #9 mp3 soundtrack support added
 #10 fixed "not responding" in some phases of the game
+#11 multi-opponent feature
 
-# tested with python3.7
-# pygame is needed install with pip install pygame
+# tested with python3.11.2
+# pygame is needed install with pip3 install pygame --break-system-packages
 
 
-# for deployment pyinstaller is needed install with pip install pyinstaller
+# for deployment pyinstaller is needed install with pip3 install pyinstaller --break-system-packages
 
 
 #deploy with /home/*/.local/bin/pyinstaller --noconsole --onefile --clean PokerView.py
@@ -34,14 +35,14 @@ from pygame import mixer #9
 
 ###############################################Global constants here#######START
 gname = "Kiss Strip Poker" # game name 5
-modelname = "X" # model/dir name #5 must be equal to C1 on ksge
+modelname = "KSP" # model/game name #5 must be equal to C1 on ksge #11
 wcou = 3 # number of winning row... must be equal to C5bis on ksge
 if platform.system() == "Windows": #5
-	wdir = ".ksge"
-	wfile = ".ksge\\action"+modelname  #5
+	wdir = "act"
+	wfile = "act\\action"+modelname  #5
 else:
-	wdir = "/dev/shm/.ksge"
-	wfile = "/dev/shm/.ksge/action"+modelname #5
+	wdir = "act"
+	wfile = "act/action"+modelname #5
 BLACK = (255,255,255)
 BLACK = (0,0,0)
 GREY  = (50,50,50)
