@@ -1,5 +1,7 @@
 KISS STRIP POKER
 
+In few days a new version of kiss strip poker will be published, it will be able to play both encrypted and uncrybted content and will also be able to play more opponents using a launcher. this will make easir to upgrade the engine during the time. stay tuned.
+
 a free & opensource strip poker game engine made with Freebasic and Python , based on the Kiss Strip Game Engine (KSGE) and other opensource projects
 
 This game is realized with those goals:
