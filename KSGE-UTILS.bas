@@ -1,52 +1,49 @@
 'UTILITIES FOR KSGE
-' v0.2 20191105
-' v0.3 20201001
-' v1.0 20210303 - utilities for kspc v2
 
 dim totaladdr as integer
 dim shared K1 as string*64
-dim Kh as string*64
-dim raddress(1 to 20) as string
-dim usdprice as integer
-dim randomizeprice as double
 dim shared action as string
 dim shared shash as string
 dim shared shashw as string
-dim popenc as integer
 dim shared rurl as string
-dim pop as string
 dim shared rown as string
 dim shared kspcha as string
 dim shared kspchaw as string
 dim shared scode as string
 dim shared emlf as string
-
+dim shared kspcbmp as string
+dim fname as string
+dim kspeha as string
+dim kspehaw as string
+dim kspebmp as string
 '***************signature+settings*START***********************************
-const C1 as string = "X" 'model name wich should be equal to folder name
-K1 = "kissstrippokerkissstrippokerkissstrippokerkissst" 'key used to encrypt media content and activation file
-Kh = "kissstripgameenginekissstripgameenginekissstripg" ' key used to temporary activation file (helpme manual procedure)
-shash = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  -" 'single hash for all clip *.cpt files
-shashw = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy  -" 'single hash for all clip *.cpt files for windows platform
-kspcha = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz  kspc" ' hash for kspc
-kspchaw= "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk  kspc.exe" ' hash for kspc.exe for windows
-usdprice = 50 'target price in USD (intended more or less because of volatility and randomization), please insert integer number example: 50
-randomizeprice = 0.00009999 'randomize price in satoshi
-raddress(1) = "bc1qzemkkmvmpqfxua6segdd9d75jk4t3gvws3cld8" 'address to check transaction for (where monetize)
-totaladdr = 1 ' number of btc addresses inserted above (change only if you want to use more then one btc address)
-rurl = "KISS STRIP GAME ENGINE" 'please do not touch this line
-rown = "my-mail@gmail.com , www.mysite.com , etc" 'info about game author (mail, website, social, etc)
+const KSGEVER as string = "20240408" 'ksge version
+const C1 as string = "KSP" 'costant name after 2024 re-engineered
+const C4 as string = "KISS STRIP POKER" 'game name
+K1 = "stripgamesarecool" 'key used to encrypt media content and activation file
+const ccryptha as string = "1d2c1d17b7b0951608bac0baa03b3081  " 'ccrypt hash
+const ccrypthaw as string = "1870e29d6261841058b8f73f4e3fe0d2  " 'ccrypt.exe hash
+const livlchaw as string = "3c48d31c6fe86762b9ec8ce129444a12  " 'libvlc.dll hash
+kspcha = "8a6c6bface2dd2b485e72bdc0b5c69f3  " ' hash for kspc (linux)
+kspchaw= "9b2cbc9e7ef6ee7a389b4bd7e01b1273  " ' hash for kspc.exe (windows)
+kspcbmp= "6f8ed7428ba09d521a70c5b883afaf78  " ' hash for kspc.bmp
+kspeha = "72964c196caeea86c25512ae7a922f40  " ' hash for poker-end (linux)
+kspehaw= "6ef31114f0d2e44645fd6752828ab3b6  " ' hash for poker-end.exe (windows)
+kspebmp= "496ba6834b137ca88db192d04f33421b  " ' hash for poker-end.bmp
+rown = "ksge@tutanota.com , https://kissstrippoker.wordpress.com" 'info about game author (mail, website, social, etc)
+scode = "https://github.com/ksge" 'ksge github page, you can add yours if needed
 const C3 as string = "mkv" 'clip file format
 const C2 as string = "0" 'debug 0=no 1=yes
-const C4 as string = "KISS STRIP POKER" 'game name
-dim C5 as string = Command(1)  'number of winning rows passed by command line (to be tested may not work)
-const C5bis as string = "3" 'number of winning rows required by removing opponent pice of cloth
-const C6 as integer = 4 'number of stages allowed for demo. if you don't want to monetize just type a value = to total number of stages or above
-scode = "https://github.com/ksge" 'ksge github page, you can add yours if needed
+dim KSGEENC as string = Command(1) 'type of media content: u=uncrypted e=encrytped
+dim KSGEKNM as string = Command(2) 'model name = folder name - used for build activation file name only in encrypted mode
+const C5bis as string = "3" 'number of winning rows required by removing opponent piece of cloth
+const C6 as integer = 2 'number of stages allowed for demo
+rurl = "KISS STRIP GAME ENGINE" 'please do not touch this line
 sub artwork 'this ascii artwork will appear in terminal window
 	cls '6.3
 	print "                   .:+!++:::.  .:u+::.     " + C4
-	print "                 !!!X:!X<!!!<!#%?!!~XX!!!!:   with"
-	print "             :<!!X!!!!:!!>?~!~:<!~!!!?!!!X!!!:  " + C1
+	print "                 !!!X:!X<!!!<!#%?!!~XX!!!!:   "
+	print "             :<!!X!!!!:!!>?~!~:<!~!!!?!!!X!!!:  "
 	print "           <!!!%!!!!!~!!!!!!<!!!!!!!!!!!!!!!X!!:"
 	print "         <!!!!!!!!!!:<<<~~~!~~~~!~~~~!~!<!:!!!!!!:"
 	print "       :!!!!!!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~<!~!!!!!."
@@ -58,23 +55,17 @@ sub artwork 'this ascii artwork will appear in terminal window
 	print "         ~!!!!!!!!!?!!R?MMM!#$T*M!RMSMXM7!!!!!!!\~~"
 	print "           ~~~!!!!!~!!!!!!!!!<!!!!:!!!!!!!!<!~!~~  "
 	print "              ~~~~!!!!~!~!~~~!>!:~!!!!!!!!!~~~"
-	print "                 `~~~~~~!<!~~!<!!~~!::~~~~~"
-	print "                         ~~~~~~~~~~~~!    " + rurl
-	if emlf <> "BLANK" and emlf <> "" then
+	print "                 `~~~~~~!<!~~!<!!~~!::~~~~~" + rurl
+	print "                         ~~~~~~~~~~~~!    ver" + KSGEVER
+	if emlf <> "DEMO" and emlf <> "demo" then
 		print "activated by " + emlf + " - thank YOU!"
+	else
+		print "Demo mode"
 	end if
-end sub
-'***************signature+settings*END***********************************
-
+end sub'***************signature+settings*END***********************************
 dim choice as integer
-'dim extens as string
-
+dim CFNAME as string
 dim CC1 as string
-	#IFDEF __FB_WIN32__
-		CC1 = "..\" + C1
-	#ELSE
-		CC1 = "../" + C1
-	#ENDIF
 
 #IFDEF __FB_WIN32__
 	const nclipstage as string = "stage" 'part of clip name
@@ -85,7 +76,6 @@ dim CC1 as string
 	const nclipenter as string = "./enter" 'part of clip name
 	const nclipend as string = "./end" 'part of clip name
 #ENDIF
-
 
 dim HW1 as string 
 dim cmd2 as string
@@ -98,6 +88,7 @@ dim txf as string
 dim shared totalstages as integer
 dim shared currentstage as integer = 0
 dim shared clipcount as integer = 0
+dim ffname as string
 
 sub stagescounter
 	dim flname as string
@@ -136,263 +127,259 @@ End Function
 'screen 21
 color 14,2
 cls
+print "KSGE ACTIVATOR/ENCRYPTER version " + KSGEVER
+print 
 
-print "KSGE ACTIVATOR/ENCRYPTER"
-print C4 + " with " + C1
+#IFDEF __FB_WIN32__
+		shell "dir ..\opponents  /ad /b"
+	#ELSE
+		shell "dir ../opponents"
+#ENDIF
+
 print
-print "LAUNCH THIS PROGRAM INSIDE THE GAME FOLDER!"
+input "please enter opponent folder/name -> " ; fname
+#IFDEF __FB_WIN32__
+		ffname = "..\opponents\" + fname
+	#ELSE
+		ffname = "../opponents/" + fname
+#ENDIF
+chdir ffname
+
+#IFDEF __FB_WIN32__
+	CC1 = "key\" + C1
+	CFNAME = "key\" + fname
+#ELSE
+	CC1 = "key/" + C1
+	CFNAME = "key/" + fname
+#ENDIF
+
+cls
+print "KSGE ACTIVATOR/ENCRYPTER version " + KSGEVER
+print C4
+print "working folder:" 
+print CurDir
 print
 print "1- video file encrypter"
-print "2- activation file re-encryption"
-print "3- video file decrypter"
-print "4- activation file re-encryption 4 no hw limits"
-print "41- activation file generation 4 no hw limits"
-print "5- look activation .key for debug purpose"
-print "6- generate single md5sum hash of encrypted *.cpt clips files and kspc (do it both on linux+windows)"
-print "7- (DEPRECATED) create activation file (proof of payment-pop) for payment gateways"
-print "8- (DEPRECATED) look tmp pop activation key for debug purpose"
-print "9- count clips"
+print "2- video file decrypter"
+print "3- clips key file generation"
+print "4- activation file generation"
+print "5- activation file & clips key viewer"
+print "6- print single md5sum hash of encrypted *.cpt clips files"
+print "7- print md5sum hashs of kspc and poker-end binaries and bmps"
+print "8- print md5sum hashs of ccrypt and libvlc binaries"
+print "9- clips counter"
 print
 print "0- quit"
 input "-> " ; choice
 print
 
-if choice = 1 then
+if choice = 1 then 'video file encrypter
+	print "ARE YOU SURE? press enter to continue"
+	sleep
 	'print "input video file format (example mkv)"
 	'input "-> " ; extens
 	'print
 	#IFDEF __FB_WIN32__
-	shell "echo " + K1 + "| ccrypt-win\ccrypt.exe -e -k - *." + C3
+	shell "echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -e -k - *." + C3
 	#ELSE
-	shell "echo " + K1 + "| ./ccrypt/ccrypt -e -k - *." + C3
+	shell "echo " + K1 + "| ../../core/ccrypt/ccrypt -e -k - *." + C3
 	#ENDIF
 	print "DONE!"
 	sleep
 	print
 end if
 
-if choice = 2 then
-	
+
+if choice = 2 then 'video file decrypter
+	print "ARE YOU SURE? press enter to continue"
+	sleep
+	'print "input video file format (example mkv)"
+	'input "-> " ; extens
+	'print
+	#IFDEF __FB_WIN32__
+	shell "echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -d -k - *." + C3 + ".cpt"
+	#ELSE
+	shell "echo " + K1 + "| ../../core/ccrypt/ccrypt -d -k - *." + C3 + ".cpt"
+	#ENDIF
+	print "DONE!"
+	sleep
+	print
+end if
+
+if choice = 3 then 'clips key file generation
 	dim HW1 as string 
 	dim cmd2 as string
 	dim EML as string
+	print
+	print "PLEAST NOTE THAT THIS TOOL SHOULD BE RUN ONCE BOTH IN WINDOWS AND LINUX, OF COURSE ONLY IF YOU WANT THAT THE GAME WILL WORK ON BOTH PLATFORMS"
+	PRINT 
+	print "PLEASE NOTE THAT THE CLIPS KEY FILE WILL BE OVERWRITTEN IF EXISTS"
+	print "clips key file is required to play with encrypted content"
+	print
+	print "press enter to create clips key file"
+	sleep
+	'kill CFNAME + "-kwin"
+	'kill CFNAME + "-kwin.cpt"
+	'kill CFNAME + "-klin"
+	'kill CFNAME + "-klin.cpt"
+	sleep 100, 1
+	
 	#IFDEF __FB_WIN32__
-	open pipe ("echo " + Kh + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-key.cpt") for Input as #3
-	#ELSE
-	open pipe ("echo " + Kh + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-key.cpt") for Input as #3
-	#ENDIF
-		line input #3, EML
-		line input #3, HW1
-		line input #3, C1F
-		line input #3, pop
-		line input #3, satf
-		line input #3, walf
-		line input #3, txf
-		print "mail: " + EML
-		print "hw: " + HW1
-		print "model: " + C1F
-		print "date: " + pop
-		print "satoshi: " + satf
-		print "wallet: " + walf
-		print "tx: " + txf
+		open CFNAME + "-kwin" FOR OUTPUT AS #4
+		dim cmdshl as string
+		'cmdshl = "dir *.cpt /b /os | ..\..\core\md5deep\md5deep64.exe -q"
+		cmdshl = "dir *.cpt /b /os | ..\..\core\md5deep\md5deep64.exe -q"
+		Open Pipe cmdshl For Input As #1
+			Dim As String ln
+			Line Input #1, ln
+		close #1
+		print curdir
+		shell "dir *.cpt /b /os"
 		print
-	close #3
-	print "ATTENTION: if key don't match, maybe the user is trying to do something bad"
-	if txf = "helpme" or txf = "BLANK" then
-		print "enter transaction number:"
-		txf = ""
-		input txf
-		kill CC1 + "-key"
-		kill CC1 + "-key.cpt"
-		sleep 100, 1
-		open CC1 + "-key" FOR OUTPUT AS #4
-		print #4, EML
-		print #4, HW1
-		print #4, C1F
-		print #4, pop
-		print #4, satf
-		print #4, walf
-		print #4, txf
-    CLOSE #4
+		print "single md5sum for *.cpt clips for Windows platform:"
+		print ln
+		print #4, ln
+		close #4
+	#ELSE
+		open CFNAME + "-klin" FOR OUTPUT AS #4
+		dim cmdshl as string
+		'cmdshl = "du --apparent-size -k *.cpt | md5sum -z"
+		cmdshl = "ls -1hSr *.cpt | md5deep -q"
+		Open Pipe cmdshl For Input As #1
+			Dim As String ln
+			Line Input #1, ln
+		close #1
+		print curdir
+		shell "ls -1hSr *.cpt"
+		print
+		print "single md5sum for *.cpt clips for Linux platform:"
+		print ln
+		print #4, ln
+		close #4
+	#ENDIF
 	sleep 100, 1
+	print
 	#IFDEF __FB_WIN32__
-	shell "echo " + Kh + "| ccrypt-win\ccrypt.exe -e -k - " + CC1 + "-key"
+		shell "echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -e -k - " + CFNAME + "-kwin"
+		print "CLIPS KEYFILE FOR WINDOWS PLATFORM CREATED!"
 	#ELSE
-	shell "echo " + Kh + "| ./ccrypt/ccrypt -e -k - " + CC1 + "-key"
+		shell "echo " + K1 + "| ../../core/ccrypt/ccrypt -e -k - " + CFNAME + "-klin"
+		print "CLIPS KEYFILE FOR LINUX PLATFORM CREATED!"
 	#ENDIF
-	sleep 100,1
-	end if
-	print "press enter to re-encryption"
-	sleep
-	
-	#IFDEF __FB_WIN32__
-	shell "echo " + Kh + "| ccrypt-win\ccrypt.exe -d -k - " + CC1 + "-key.cpt"
-	#ELSE
-	shell "echo " + Kh + "| ./ccrypt/ccrypt -d -k - " + CC1 + "-key.cpt"
-	#ENDIF
-	sleep 500,1
-	#IFDEF __FB_WIN32__
-	shell "echo " + K1 + "| ccrypt-win\ccrypt.exe -e -k - " + CC1 + "-key"
-	#ELSE
-	shell "echo " + K1 + "| ./ccrypt/ccrypt -e -k - " + CC1 + "-key"
-	#ENDIF
-	print "DONE!"
 	sleep
 	print
 end if
 
-if choice = 3 then
-	'print "input video file format (example mkv)"
-	'input "-> " ; extens
-	'print
-	#IFDEF __FB_WIN32__
-	shell "echo " + K1 + "| ccrypt-win\ccrypt.exe -d -k - *." + C3 + ".cpt"
-	#ELSE
-	shell "echo " + K1 + "| ./ccrypt/ccrypt -d -k - *." + C3 + ".cpt"
-	#ENDIF
-	print "DONE!"
-	sleep
-	print
-end if
-
-if choice = 4 then
-	
-	dim HW1 as string 
-	dim cmd2 as string
-	dim EML as string
-	#IFDEF __FB_WIN32__
-	open pipe ("echo " + Kh + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-key.cpt") for Input as #3
-	#ELSE
-	open pipe ("echo " + Kh + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-key.cpt") for Input as #3
-	#ENDIF
-		line input #3, EML
-		line input #3, HW1
-		print HW1
-		print EML
-	close #3
-	print "ATTENTION: if key don't match, maybe the user is trying to do something bad"
-	print "press enter to re-encryption for NO HW LIMIT DEPLOY"
-	sleep
-	
-	'shell "echo " + Kh + "| ./ccrypt/ccrypt -d -k - " + CC1 + "-key.cpt"
-	'sleep 500,1
-	kill CC1 + "-key"
-	kill CC1 + "-key.cpt"
-	sleep 100, 1
-	open CC1 + "-key" FOR OUTPUT AS #4
-		print #4, EML
-		'print #4, HW2
-		print #4, K1
-    CLOSE #4
-	sleep 100, 1
-	
-	#IFDEF __FB_WIN32__
-	shell "echo " + K1 + "| ccrypt-win\ccrypt.exe -e -k - " + CC1 + "-key"
-	#ELSE
-	shell "echo " + K1 + "| ./ccrypt/ccrypt -e -k - " + CC1 + "-key"
-	#ENDIF
-	print "DONE!"
-	sleep
-	print
-end if
-
-if choice = 41 then
-	
+if choice = 4 then 'activation file generation
 	dim HW1 as string 
 	dim cmd2 as string
 	dim EML as string
 	print
 	print "PLEASE NOTE THAT THE ACTIVATION FILE WILL BE OVERWRITTEN IF EXISTS"
-	'#IFDEF __FB_WIN32__
-	'open pipe ("echo " + Kh + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-key.cpt") for Input as #3
-	'#ELSE
-	'open pipe ("echo " + Kh + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-key.cpt") for Input as #3
-	'#ENDIF
-	'	line input #3, EML
-	input "please enter customer email address: ", EML
-	'	line input #3, HW1
-	'	print HW1
-	'	print EML
-	'close #3
-	'print "ATTENTION: if key don't match, maybe the user is trying to do something bad"
-	'print "press enter to re-encryption for NO HW LIMIT DEPLOY"
-	'sleep
-	
-	'shell "echo " + Kh + "| ./ccrypt/ccrypt -d -k - " + CC1 + "-key.cpt"
-	'sleep 500,1
-	kill CC1 + "-key"
-	kill CC1 + "-key.cpt"
+	print "activation file is required to play with encrypted content"
+	print "to generate an activation file for demo purpose just type DEMO"
+	print "to generate an activation file for playing full game type supporter mail address"
+	print
+	print "please enter supporter mail address (type DEMO for 2 stages only demo mode):"
+	input EML
+	'kill CFNAME + "-key"
+	'kill CFNAME + "-key.cpt"
 	sleep 100, 1
-	open CC1 + "-key" FOR OUTPUT AS #4
+	open CFNAME + "-key" FOR OUTPUT AS #4
+	#IFDEF __FB_WIN32__
+		dim cmdshl as string
+		'cmdshl = "dir *.cpt /b /os | ..\..\core\md5deep\md5deep64.exe -q"
+		cmdshl = "dir *.cpt /b /os | ..\..\core\md5deep\md5deep64.exe -q"
+		Open Pipe cmdshl For Input As #1
+			Dim As String ln
+			Line Input #1, ln
+		close #1
+		print curdir
+		shell "dir *.cpt /b /os"
+		print
+		print "single hash for *.cpt clips is:"
+		print ln
+		print #4, ln
+	#ELSE
+		dim cmdshl as string
+		'cmdshl = "du --apparent-size -k *.cpt | md5sum -z"
+		cmdshl = "ls -1hSr *.cpt | md5deep -q"
+		Open Pipe cmdshl For Input As #1
+			Dim As String ln
+			Line Input #1, ln
+		close #1
+		print curdir
+		shell "ls -1hSr *.cpt"
+		print
+		print "single md5sum for .cpt clips is:"
+		print ln
+		print #4, ln
+		print
+	#ENDIF
 		print #4, EML
-		'print #4, HW2
-		print #4, K1
     CLOSE #4
 	sleep 100, 1
 	
 	#IFDEF __FB_WIN32__
-	shell "echo " + K1 + "| ccrypt-win\ccrypt.exe -e -k - " + CC1 + "-key"
+		shell "echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -e -k - " + CFNAME + "-key"
 	#ELSE
-	shell "echo " + K1 + "| ./ccrypt/ccrypt -e -k - " + CC1 + "-key"
+		shell "echo " + K1 + "| ../../core/ccrypt/ccrypt -e -k - " + CFNAME + "-key"
 	#ENDIF
-	print "DONE!"
+	print "ACTIVATION FILE CREATED! YOU CAN SEND IT TO YOUR SUPPORTER"
 	sleep
 	print
 end if
 
-if choice = 5 then	
-	print "let's try to open key with K1...."
+if choice = 5 then 'activation file & clips key file viewer	
 	#IFDEF __FB_WIN32__
-	open pipe ("echo " + K1 + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-key.cpt") for Input as #3
+		open pipe ("echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -c -k - " + CFNAME + "-key.cpt") for Input as #3
+		open pipe ("echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -c -k - " + CFNAME + "-kwin.cpt") for Input as #4
+		open pipe ("echo " + K1 + "| ..\..\core\ccrypt-win\ccrypt.exe -c -k - " + CFNAME + "-klin.cpt") for Input as #5
 	#ELSE
-	open pipe ("echo " + K1 + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-key.cpt") for Input as #3
+		open pipe ("echo " + K1 + "| ../../core/ccrypt/ccrypt -c -k - " + CFNAME + "-key.cpt") for Input as #3
+		open pipe ("echo " + K1 + "| ../../core/ccrypt/ccrypt -c -k - " + CFNAME + "-kwin.cpt") for Input as #4
+		open pipe ("echo " + K1 + "| ../../core/ccrypt/ccrypt -c -k - " + CFNAME + "-klin.cpt") for Input as #5
 	#ENDIF
-		line input #3, EML
-		line input #3, HW1
-		line input #3, C1F
-		line input #3, pop
-		line input #3, satf
-		line input #3, walf
-		line input #3, txf
-		print "mail: " + EML
-		print "hw: " + HW1
-		print "model: " + C1F
-		print "date: " + pop
-		print "satoshi: " + satf
-		print "wallet: " + walf
-		print "tx: " + txf
-		print
+	line input #3, HW1
+	line input #3, EML
+	print CFNAME + "-key.cpt"
+	print "*.cpt clips md5sum: "
+	print HW1
+	print "supporter mail: " 
+	print EML
+	print
+	if EML = "DEMO" or EML = "demo" then
+		print "this is a demo mode key"
+	else
+		print "this is a full game key"
+	end if
+	print
 	close #3
-	print "let's try to open key with Kh...."
-	#IFDEF __FB_WIN32__
-	open pipe ("echo " + Kh + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-key.cpt") for Input as #3
-	#ELSE
-	open pipe ("echo " + Kh + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-key.cpt") for Input as #3
-	#ENDIF
-		line input #3, EML
-		line input #3, HW1
-		line input #3, C1F
-		line input #3, pop
-		line input #3, satf
-		line input #3, walf
-		line input #3, txf
-		print "mail: " + EML
-		print "hw: " + HW1
-		print "model: " + C1F
-		print "date: " + pop
-		print "satoshi: " + satf
-		print "wallet: " + walf
-		print "tx: " + txf
-		print
-	close #3
-	print "ATTENTION: if key don't match, maybe the user is trying to do something bad"
+	line input #4, shashw
+	print CFNAME + "-kwin.cpt"
+	print "*.cpt clips md5sum: "
+	print shashw
+	close #4
+	line input #5, shash
+	print CFNAME + "-klin.cpt"
+	print "*.cpt clips md5sum: "
+	print shash
+	close #5
+	print
+	if shashw = HW1 or shash = HW1 then
+		print "KEYS MATCH: OK"
+	else
+		print "ERROR: KEYS DOESN'T MATCH!"
+	end if
 	sleep
 end if
 
-if choice = 6 then
+if choice = 6 then 'print single md5sum hash of encrypted *.cpt clips files
 	#IFDEF __FB_WIN32__
 	dim cmdshl as string
-	cmdshl = "dir *.cpt /b /os | md5\md5.exe"
+	'cmdshl = "..\..\core\md5deep\md5deep64.exe -b *.cpt | sort -u | ..\..\core\md5deep\md5deep64.exe -b"
+	'cmdshl = "dir *.cpt /b /os | md5\md5.exe"
+	cmdshl = "dir *.cpt /b /os | ..\..\core\md5deep\md5deep64.exe -q"
 	Open Pipe cmdshl For Input As #1
 	Dim As String ln
 		Line Input #1, ln
@@ -405,11 +392,14 @@ if choice = 6 then
 				filename = Dir( )
 			Loop
 		print
-		print "single hash for .cpt clips for Windows platform is:"
+		print "this result is valid only for Windows platform, you need to launch this tool on Linux too if you want that key also works on the Linux platform"
+		print "single md5sum for *.cpt for Linux platform clips is:"
 		print ln
 	#ELSE
 	dim cmdshl as string
-	cmdshl = "du --apparent-size -k *.cpt | md5sum"
+	'cmdshl = "md5deep -b *.cpt | sort /u | md5deep -b"
+	'cmdshl = "du --apparent-size -k *.cpt | md5sum"
+	cmdshl = "ls -1hSr *.cpt | md5deep -q"
 	Open Pipe cmdshl For Input As #1
 	Dim As String ln
 		Line Input #1, ln
@@ -422,81 +412,114 @@ if choice = 6 then
 				filename = Dir( )
 			Loop
 		print
-		print "single hash for .cpt clips for linux platform is:"
+		print "this result is valid only for Linux platform, you need to launch this tool on Windows too if you want that key also works on the Windows platform"
+		print "single md5sum for *.cpt for Windows platform clips is:"
 		print ln
 		print
 	#ENDIF
-	
-	'kspc hash
+	sleep
+end if
+
+if choice = 7 then 'generate md5sum hashs of kspc and poker-end binaries and bmps
 	dim cmdshl3 as string
+	dim cmdshl3a as string
+	dim cmdshl3b as string
+	dim cmdshl1 as string
+	dim cmdshl1a as string
+	dim cmdshl1b as string
+	Dim As String ln
 	#IFDEF __FB_WIN32__
-		cmdshl3 = ("md5\md5.exe kspc.exe")
+		cmdshl3 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\kspc.exe")
+		cmdshl3a = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\kspc")
+		cmdshl3b = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\kspc.bmp")
+		cmdshl1 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\poker-end.exe")
+		cmdshl1a = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\poker-end")
+		cmdshl1b = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\poker-end.bmp")
 	#ELSE
-		cmdshl3 = ("md5sum kspc")
+		cmdshl3 = ("md5deep -q ../../core/kspc.exe")
+		cmdshl3a = ("md5deep -q ../../core/kspc")
+		cmdshl3b = ("md5deep -q ../../core/kspc.bmp")
+		cmdshl1 = ("md5deep -q ../../core/poker-end.exe")
+		cmdshl1a = ("md5deep -q ../../core/poker-end")
+		cmdshl1b = ("md5deep -q ../../core/poker-end.bmp")
+
 	#ENDIF
 	Open Pipe cmdshl3 For Input As #1
-	'Do Until EOF(1)
 		Line Input #1, ln
-		print "kspc binary hash:"
+		print "kspc.exe binary md5sum:"
 		print ln
 		Close #1
-	'Loop
-	
-	sleep
-end if
-
-if choice = 7 then
-	
-	dim HW1 as string 
-	dim cmd2 as string
-	dim EML as string
-	
-	print "Please enter the tmp activation key expiring date"
-	print "the right format is YYYY-MM-DD"
-	input pop
-	kill CC1 + "-key"
-	kill CC1 + "-key.cpt"
-	kill CC1 + "-pop-key.cpt"
-	kill CC1 + "-pop-key"
-	sleep 100, 1
-	open CC1 + "-pop-key" FOR OUTPUT AS #4
-		print #4, pop
-		print #4, C1
-    CLOSE #4
-	sleep 100, 1
-	
-	#IFDEF __FB_WIN32__
-	shell "echo " + Kh + "| ccrypt-win\ccrypt.exe -e -k - " + CC1 + "-pop-key"
-	#ELSE
-	shell "echo " + Kh + "| ./ccrypt/ccrypt -e -k - " + CC1 + "-pop-key"
-	#ENDIF
-	print "DONE! publish the -pop-key.cpt on the payment gateway or where needed!"
-	sleep
+	'
+	Open Pipe cmdshl3a For Input As #1
+		Line Input #1, ln
+		print "kspc binary md5sum:"
+		print ln
+		Close #1
+	'
+	Open Pipe cmdshl3b For Input As #1
+		Line Input #1, ln
+		print "kspc.bmp binary md5sum:"
+		print ln
+		Close #1
+	'	
 	print
-end if
+	Open Pipe cmdshl1 For Input As #1
+	Line Input #1, ln
+	print "poker-end.exe binary md5sum:"
+	print ln
+	Close #1
+	'
+	Open Pipe cmdshl1a For Input As #1
+		Line Input #1, ln
+		print "poker-end binary md5sum:"
+		print ln
+		Close #1
+	'
+	Open Pipe cmdshl1b For Input As #1
+		Line Input #1, ln
+		print "poker-end.bmp binary md5sum:"
+		print ln
+		Close #1
 
-
-if choice = 8 then	
-	dim khh as string 
-	dim cmd2 as string
-	dim EML as string
-	print "let's try to open key with Kh...."
-	#IFDEF __FB_WIN32__
-	open pipe ("echo " + Kh + "| ccrypt-win\ccrypt.exe -c -k - " + CC1 + "-pop-key.cpt") for Input as #3
-	#ELSE
-	open pipe ("echo " + Kh + "| ./ccrypt/ccrypt -c -k - " + CC1 + "-pop-key.cpt") for Input as #3
-	#ENDIF
-		line input #3, pop
-		line input #3, khh
-		print "pop: " + pop
-		print "model: " + khh
-		print
-	close #3
-	print "ATTENTION: if key don't match or date is invalid game won't activate!"
 	sleep
 end if
 
-if choice = 9 then	
+if choice = 8 then 'generate md5sum hashs of ccrypt and libvlc binaries
+	dim cmdshl4 as string
+	dim cmdsh14a as string
+	dim cmdshl4b as string
+	Dim As String ln
+	#IFDEF __FB_WIN32__
+		cmdshl4 = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\ccrypt\ccrypt")
+		cmdsh14a = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\ccrypt-win\ccrypt.exe")
+		cmdshl4b = ("..\..\core\md5deep\md5deep64.exe -q ..\..\core\libvlc.dll")
+	#ELSE
+		cmdshl4 = ("md5deep -q ../../core/ccrypt/ccrypt")
+		cmdsh14a = ("md5deep -q ../../core/ccrypt-win/ccrypt.exe")
+		cmdshl4b = ("md5deep -q ../../core/libvlc.dll")
+	#ENDIF
+	Open Pipe cmdshl4 For Input As #1
+		Line Input #1, ln
+		print "ccrypt binary md5sum:"
+		print ln
+		Close #1
+	'
+	Open Pipe cmdsh14a For Input As #1
+		Line Input #1, ln
+		print "ccrypt.exe binary md5sum:"
+		print ln
+		Close #1
+	'
+	Open Pipe cmdshl4b For Input As #1
+		Line Input #1, ln
+		print "libvlc.dll binary md5sum:"
+		print ln
+		Close #1
+	'	
+	sleep
+end if
+
+if choice = 9 then 'clips counter
 	stagescounter
 	print 
 	'print "ENTER CLIPS:"
