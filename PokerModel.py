@@ -10,6 +10,7 @@
 #7 fixes for not responding when repeating click on replace during scenes
 #10 fixed "not responding" in some phases of the game
 #11 now los clip is played also when going from act to ris
+#12 multi-opponent feature
 
 
 import operator
@@ -24,15 +25,15 @@ print (platform.system()) #5
 #7 time.sleep(0.5)
 
 #####################################################Global constants here######START
-modelname = "X" # model/dir name #5 must be equal to C1 on ksge
+modelname = "KSP" # model/game name #5 must be equal to C1 on ksge #12
 wcou = 3 # number of winning row... must be equal to C5bis on ksge
 
 if platform.system() == "Windows": #5
-	wdir = ".ksge"
-	wfile = ".ksge\\action"+modelname  #5
+	wdir = "act"
+	wfile = "act\\action"+modelname  #5
 else:
-	wdir = "/dev/shm/.ksge"
-	wfile = "/dev/shm/.ksge/action"+modelname #5
+	wdir = "act"
+	wfile = "act/action"+modelname #5
 ######################################################Global constants here######END	
 
 #os.makedirs(wdir, exist_ok=True) #5
@@ -248,7 +249,7 @@ class Poker:
 				f = open(wfile, "w")
 				f.write("los")
 				f.close()
-				print ("Oh no, now I risk to remove something..")
+				print ("Oh no, risky situation for me..")
 				xwai = "los"
 				while xwai == "los":
 					print ("oh no! I lost again")
@@ -260,7 +261,7 @@ class Poker:
 				f = open(wfile, "w")
 				f.write("ris")
 				f.close() 
-				print ("oh my god, if you win again I'll have to take something off..")
+				print ("oh my god, risky situation for me..")
 				#7 time.sleep(2)
 				##5
 			else:
@@ -299,7 +300,7 @@ class Poker:
 				f = open(wfile, "w")
 				f.write("ris")
 				f.close() 
-				print ("oh my god, if you win again I'll have to take something off ..")
+				print ("oh my god, risky situation for me..")
 				##5
 		
 		if self.scores[0] >= wcou: #winning count
@@ -308,7 +309,7 @@ class Poker:
 			#10 wait for los play
 			xwai = "los"
 			while xwai == "los":
-				print ("Looks like I lose")
+				print ("Looks like I lost")
 				time.sleep(1)
 				f = open(wfile, "r")
 				xwai = f.read()
