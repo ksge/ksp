@@ -1,0 +1,71 @@
+' POKER-END
+' display end game message
+
+#include "fbgfx.bi"
+'#include "dir.bi" 'provides constants to use for the attrib_mask parameter
+dim wintitl as string
+dim shared ksgelver as string
+dim winquitbutton as string
+'*****************************
+wintitl = "KISS STRIP POKER"
+ksgelver = "20240308" 
+'*****************************
+
+
+#IFDEF __FB_WIN32__
+	declare function hide alias "FreeConsole"() as long
+	declare function show alias "AllocConsole" () as long
+#ENDIF
+
+function load_bmp(file_name as string) as fb.image ptr
+	dim as long file_num = freefile()
+	dim as ulong image_width, image_height
+	dim as fb.image ptr pImage
+	if open(file_name, for binary, access read, as file_num) = 0 then
+		get #file_num, 18+1, image_width
+		get #file_num, 22+1, image_height
+		close #file_num
+		pImage = imagecreate(image_width, image_height) 'allocate image memory
+		bload(file_name, pImage) 'bitmap into memory
+		return pImage
+	else
+		return 0
+	end if
+end function
+
+sub displaybmp(file_name as string)
+	cls
+	dim as string bmp_file_name = file_name
+	dim as fb.image ptr pImage = load_bmp(bmp_file_name)
+	if pImage <> 0 then
+		put(0, 0), pImage, pset
+		imagedestroy(pImage)
+	else
+			print "Error. No such file?: " & bmp_file_name
+			sleep 2000
+	end if
+end sub
+
+
+
+screenres 924,549,32
+width 40,12
+WindowTitle wintitl
+#IFDEF __FB_WIN32__
+	hide
+	displaybmp("..\..\core\poker-end.bmp")
+#ELSE
+	displaybmp("../../core/poker-end.bmp")
+#ENDIF
+'target = "opponents"
+'chdir target
+'print curdir 'dbg
+'sleep 3000 'dbg
+
+do
+	sleep 200
+	winquitbutton = inkey
+	if winquitbutton = chr(255) + "k" then end 'window quit button monitoring
+loop
+
+end
