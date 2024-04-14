@@ -1,6 +1,6 @@
-C:\Users\oldboy\AppData\Local\Programs\Python\Python39\Scripts\pyinstaller.exe --noconsole --onefile --clean PokerView.py
-C:\Users\oldboy\AppData\Local\Programs\Python\Python39\Scripts\pyinstaller.exe --noconsole --onefile --clean PokerModel.py
-C:\Users\oldboy\AppData\Local\Programs\Python\Python39\Scripts\pyinstaller.exe --noconsole --onefile --clean poker-end.py
+C:\Users\user\AppData\Local\Programs\Python\Python311\Scripts\pyinstaller.exe --noconsole --onefile --clean PokerView.py
+C:\Users\user\AppData\Local\Programs\Python\Python311\Scripts\pyinstaller.exe --noconsole --onefile --clean PokerModel.py
+C:\Users\user\AppData\Local\Programs\Python\Python311\Scripts\pyinstaller.exe --noconsole --onefile --clean poker-end.py
 
 timeout /t 5
 
