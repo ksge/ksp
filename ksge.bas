@@ -32,6 +32,7 @@
 ' VERSION 6.5FREE+NONFREE 20240219 added flag to switch between Unencrypted or Encrypted content
 ' VERSION 20240331 code optimizations, md5deep replaces md5sum for better multiplatform compatibility
 ' 20240308 code optimizations
+' 20240427 bugfix with key check
 dim shared K1 as string*64
 dim shared action as string
 dim shared shash as string
@@ -50,7 +51,7 @@ dim shared kspebmp as string
 dim shared scode as string
 
 '***************signature+settings*START***********************************
-const KSGEVER as string = "20240408" 'ksge version
+const KSGEVER as string = "20240427" 'ksge version
 const C1 as string = "KSP" 'costant name after 2024 re-engineered
 const C4 as string = "KISS STRIP POKER" 'game name
 K1 = "stripgamesarecool" 'key used to encrypt media content and activation file
@@ -147,16 +148,19 @@ endflg = "no"
 ' let's see if we are on linux or windows
 dim shared CC1 as string
 dim shared CCHSH as string
+dim shared CCHS2 as string
 #IFDEF __FB_WIN32__
    CONST OS = "windows"
    'CC1 = "key\" + C1 
    CC1 = "key\" + KSGEKNM + "-key.cpt"
    CCHSH = "key\" + KSGEKNM + "-kwin.cpt"
+   CCHS2 = "key\" + KSGEKNM + "-klin.cpt"
 #ELSE
    CONST OS = "linux"
    'CC1 = "key/" + C1 
    CC1 = "key/" + KSGEKNM + "-key.cpt"
-   CCHSH = "key/" + KSGEKNM + "-klin.cpt"
+   CCHSH = "key/" + KSGEKNM + "-kwin.cpt"
+   CCHS2 = "key/" + KSGEKNM + "-klin.cpt"
 #ENDIF
 
 print C4 + " FOR: " ; OS
@@ -288,6 +292,7 @@ end sub
 sub chkkey
 	print "." 'dbg
 	dim KSGEKEY as string
+	dim shash2 as string
 	chkbin
 	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CC1) for Input as #5
 		line input #5, KSGEKEY
@@ -302,18 +307,23 @@ sub chkkey
 		line input #7, shashc
 	close #7
 	
+	open pipe ("echo " + K1 + "| " + decryptexename + " -c -k - " + CCHS2) for Input as #2
+		line input #2, shash2
+	close #2
+	
 	Open Pipe cmdshl2 For Input As #6
 		Line Input #6, ln
 	Close #6
 	
-	if shashc <> KSGEKEY then
+	if shashc <> KSGEKEY and shash2 <> KSGEKEY then
 		print "ERROR PLEASE CHECK KEY FILES!"
+		sleep 6000,1
 		end
 		kill tmpplayrootfolder + "action" + C1
 		end
 	end if
 	
-	if KSGEKEY = ln and EML <> "demo" and EML <> "DEMO" then 'or KSGEKEY = shashw then
+	if (shashc = ln or shash2 = ln) and EML <> "demo" and EML <> "DEMO" then
 		'print
 		print "game activated by:"
 		print EML
@@ -327,7 +337,7 @@ sub chkkey
 		print "please support this game. thank you"
 		'print "ksgekey: " + KSGEKEY 'debug
 		'print "ln: " + ln 'debug
-		sleep 10000
+		sleep 6000,1
 		action = "qui"
 		actiondone ("qui")
 		
